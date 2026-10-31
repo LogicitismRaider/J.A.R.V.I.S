@@ -1,0 +1,1143 @@
+/* ==========================================================================
+   STARK INDUSTRIES // J.A.R.V.I.S. MARK-LXXXV INTERFACE CORE STYLESHEET
+   Tactical Glassmorphism, Holographic Glows, HUD Telemetry & Cybernetics
+   ========================================================================== */
+
+:root {
+  --font-hud: 'Orbitron', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-tactical: 'Rajdhani', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+
+  /* Primary Stark Holographic Palette */
+  --arc-cyan: #00f0ff;
+  --arc-cyan-glow: rgba(0, 240, 255, 0.45);
+  --arc-cyan-soft: rgba(0, 240, 255, 0.12);
+  --arc-cyan-dim: rgba(0, 240, 255, 0.05);
+  --arc-gold: #ffb800;
+  --arc-gold-glow: rgba(255, 184, 0, 0.45);
+  --stark-red: #ff2a5f;
+  --stark-red-glow: rgba(255, 42, 95, 0.55);
+  --stark-green: #00ff88;
+  --stark-green-glow: rgba(0, 255, 136, 0.45);
+
+  /* Deep Space HUD Backgrounds */
+  --hud-bg-void: #030811;
+  --hud-bg-glass: rgba(7, 18, 36, 0.78);
+  --hud-bg-card: rgba(9, 24, 48, 0.65);
+  --hud-bg-hover: rgba(0, 240, 255, 0.15);
+  --hud-border: rgba(0, 240, 255, 0.28);
+  --hud-border-bright: rgba(0, 240, 255, 0.7);
+
+  /* Dynamic Active Accent (can be overridden by suit themes / alert modes) */
+  --accent-color: var(--arc-cyan);
+  --accent-glow: var(--arc-cyan-glow);
+  --accent-soft: var(--arc-cyan-soft);
+  --accent-border: var(--hud-border);
+
+  /* Sizing & Radii */
+  --corner-clip: polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px));
+  --corner-clip-lg: polygon(0 16px, 16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px));
+}
+
+/* ==========================================================================
+   RESET & BASE STYLES
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--hud-bg-void);
+  color: #e0f7fc;
+  font-family: var(--font-tactical);
+  font-size: 15px;
+  line-height: 1.4;
+  user-select: none;
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(3, 10, 22, 0.8);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* ==========================================================================
+   BACKGROUND HOLOGRAPHIC GRID & SCANLINES
+   ========================================================================== */
+.stark-hud-viewport {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: 
+    radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.08) 0%, transparent 65%),
+    radial-gradient(circle at 20% 80%, rgba(255, 184, 0, 0.04) 0%, transparent 40%),
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    #030811;
+  background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px, 100% 100%;
+  background-position: center center;
+  overflow: hidden;
+}
+
+/* Scanline Effect */
+.stark-hud-viewport::before {
+  content: " ";
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.6;
+}
+
+/* Vignette & Hologram Glow */
+.stark-hud-viewport::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 120px rgba(0, 240, 255, 0.15), inset 0 0 40px rgba(3, 8, 17, 0.85);
+  pointer-events: none;
+  z-index: 998;
+}
+
+/* ==========================================================================
+   TOP HEADER HUD NAV
+   ========================================================================== */
+.stark-header {
+  height: 64px;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--accent-border);
+  background: linear-gradient(180deg, rgba(9, 24, 48, 0.85) 0%, rgba(4, 11, 23, 0.5) 100%);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  position: relative;
+}
+
+.stark-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.stark-emblem {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent-color);
+  box-shadow: 0 0 14px var(--accent-glow);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, var(--accent-soft) 20%, transparent 70%);
+}
+
+.stark-emblem-core {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  box-shadow: 0 0 10px var(--accent-color);
+  animation: corePulse 2s infinite ease-in-out;
+}
+
+.stark-title-group h1 {
+  font-family: var(--font-hud);
+  font-size: 18px;
+  letter-spacing: 3px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 0 12px var(--accent-glow);
+}
+
+.stark-title-group .stark-subtitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--accent-color);
+  opacity: 0.85;
+}
+
+/* Center HUD Status Pill */
+.header-telemetry {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.telemetry-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: var(--hud-bg-card);
+  border: 1px solid var(--hud-border);
+  clip-path: var(--corner-clip);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.telemetry-chip .chip-label {
+  color: rgba(224, 247, 252, 0.6);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.telemetry-chip .chip-val {
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.telemetry-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--stark-green);
+  box-shadow: 0 0 8px var(--stark-green);
+  animation: blinkFast 2s infinite;
+}
+
+/* Header Controls */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stark-btn {
+  background: var(--hud-bg-card);
+  border: 1px solid var(--hud-border);
+  color: #e0f7fc;
+  padding: 8px 16px;
+  font-family: var(--font-hud);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  clip-path: var(--corner-clip);
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stark-btn:hover {
+  background: var(--hud-bg-hover);
+  border-color: var(--accent-color);
+  color: #fff;
+  box-shadow: 0 0 15px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+.stark-btn:active {
+  transform: translateY(1px);
+}
+
+.stark-btn.btn-accent {
+  background: var(--accent-soft);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  font-weight: bold;
+}
+.stark-btn.btn-accent:hover {
+  background: var(--accent-color);
+  color: #030811;
+  box-shadow: 0 0 20px var(--accent-color);
+}
+
+.stark-btn.btn-danger {
+  border-color: var(--stark-red);
+  color: var(--stark-red);
+}
+.stark-btn.btn-danger:hover {
+  background: var(--stark-red);
+  color: #fff;
+  box-shadow: 0 0 20px var(--stark-red-glow);
+}
+
+/* ==========================================================================
+   MAIN DASHBOARD GRID LAYOUT
+   ========================================================================== */
+.stark-main-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 340px 1fr 360px;
+  grid-template-rows: 1fr;
+  gap: 16px;
+  padding: 16px 20px 12px 20px;
+  min-height: 0;
+  position: relative;
+  z-index: 10;
+}
+
+/* General Tactical HUD Panel */
+.hud-panel {
+  background: var(--hud-bg-glass);
+  border: 1px solid var(--hud-border);
+  backdrop-filter: blur(16px);
+  clip-path: var(--corner-clip-lg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(0, 240, 255, 0.03);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hud-panel:hover {
+  border-color: var(--hud-border-bright);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(0, 240, 255, 0.06);
+}
+
+.hud-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--hud-border);
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.1) 0%, transparent 100%);
+}
+
+.hud-panel-title {
+  font-family: var(--font-hud);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hud-panel-title i {
+  color: var(--accent-color);
+  font-style: normal;
+}
+
+.hud-panel-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-color);
+  padding: 2px 8px;
+  background: var(--arc-cyan-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 2px;
+}
+
+.hud-panel-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ==========================================================================
+   LEFT COLUMN: ARMOR TELEMETRY & SYSTEM DIAGNOSTICS
+   ========================================================================== */
+.left-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+
+/* Armor Status Widget */
+.armor-status-card {
+  background: var(--hud-bg-card);
+  border: 1px solid var(--hud-border);
+  clip-path: var(--corner-clip);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.armor-visualizer-container {
+  height: 140px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, transparent 70%);
+  border: 1px dashed rgba(0, 240, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.armor-canvas-hud {
+  width: 100%;
+  height: 100%;
+}
+
+.armor-model-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-family: var(--font-hud);
+  font-size: 11px;
+  color: var(--arc-gold);
+  text-shadow: 0 0 8px var(--arc-gold-glow);
+}
+
+.armor-integrity-tag {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--stark-green);
+}
+
+/* Subsystem Gauges */
+.gauge-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gauge-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gauge-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-family: var(--font-tactical);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.gauge-label-row span:last-child {
+  font-family: var(--font-mono);
+  color: var(--accent-color);
+}
+
+.gauge-bar-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 240, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.gauge-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-color), #fff);
+  box-shadow: 0 0 10px var(--accent-glow);
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gauge-bar-fill.fill-gold {
+  background: linear-gradient(90deg, var(--arc-gold), #fff);
+  box-shadow: 0 0 10px var(--arc-gold-glow);
+}
+
+.gauge-bar-fill.fill-green {
+  background: linear-gradient(90deg, var(--stark-green), #fff);
+  box-shadow: 0 0 10px var(--stark-green-glow);
+}
+
+/* Diagnostics checklist */
+.diagnostics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.diag-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(4, 14, 30, 0.7);
+  border-left: 2px solid var(--accent-color);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.diag-item.status-ok span:last-child {
+  color: var(--stark-green);
+}
+
+.diag-item.status-alert {
+  border-left-color: var(--stark-red);
+}
+.diag-item.status-alert span:last-child {
+  color: var(--stark-red);
+}
+
+/* ==========================================================================
+   CENTER COLUMN: HOLOGRAPHIC ARC REACTOR & VOICE COCKPIT
+   ========================================================================== */
+.center-viewport {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  position: relative;
+}
+
+/* Main Arc Reactor Stage */
+.arc-reactor-stage {
+  flex: 1;
+  background: var(--hud-bg-glass);
+  border: 1px solid var(--hud-border);
+  backdrop-filter: blur(20px);
+  clip-path: var(--corner-clip-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 16px;
+}
+
+/* Reactor Holographic Background rings */
+.reactor-radar-sweep {
+  position: absolute;
+  width: 440px;
+  height: 440px;
+  border-radius: 50%;
+  border: 1px dashed rgba(0, 240, 255, 0.2);
+  pointer-events: none;
+  animation: radarRotate 25s linear infinite;
+}
+
+.reactor-canvas-wrapper {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#arcReactorCanvas {
+  width: 320px;
+  height: 320px;
+  filter: drop-shadow(0 0 25px var(--accent-glow));
+}
+
+/* Reactor Status Overlay */
+.reactor-telemetry-hud {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  background: rgba(3, 11, 24, 0.85);
+  border: 1px solid var(--hud-border);
+  padding: 8px 24px;
+  clip-path: var(--corner-clip);
+  z-index: 5;
+}
+
+.reactor-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.reactor-stat .stat-lbl {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: rgba(224, 247, 252, 0.6);
+  text-transform: uppercase;
+}
+
+.reactor-stat .stat-num {
+  font-family: var(--font-hud);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent-color);
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* Subtitle / JARVIS Speech bubble */
+.jarvis-subtitles {
+  min-height: 44px;
+  max-width: 90%;
+  margin: 8px auto 0 auto;
+  text-align: center;
+  font-family: var(--font-tactical);
+  font-size: 15px;
+  letter-spacing: 0.8px;
+  color: #fff;
+  text-shadow: 0 0 8px var(--accent-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  background: rgba(0, 240, 255, 0.05);
+  border-left: 2px solid var(--accent-color);
+  border-right: 2px solid var(--accent-color);
+  transition: all 0.3s ease;
+}
+
+/* Bottom Interactive Voice / Input Console */
+.voice-command-dock {
+  height: 120px;
+  background: var(--hud-bg-glass);
+  border: 1px solid var(--hud-border);
+  backdrop-filter: blur(16px);
+  clip-path: var(--corner-clip-lg);
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.voice-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mic-toggle-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent-color);
+  background: var(--accent-soft);
+  color: var(--accent-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 0 15px var(--accent-glow);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.mic-toggle-btn:hover {
+  background: var(--accent-color);
+  color: #030811;
+  box-shadow: 0 0 25px var(--accent-color);
+}
+
+.mic-toggle-btn.is-listening {
+  background: var(--stark-red);
+  border-color: var(--stark-red);
+  color: #fff;
+  box-shadow: 0 0 25px var(--stark-red-glow);
+  animation: micPulse 1s infinite alternate;
+}
+
+.terminal-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.terminal-prompt-prefix {
+  position: absolute;
+  left: 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent-color);
+  pointer-events: none;
+}
+
+.terminal-input {
+  width: 100%;
+  height: 42px;
+  background: rgba(3, 10, 22, 0.85);
+  border: 1px solid var(--hud-border);
+  clip-path: var(--corner-clip);
+  padding: 0 16px 0 36px;
+  color: #e0f7fc;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.terminal-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.terminal-input::placeholder {
+  color: rgba(224, 247, 252, 0.35);
+  font-family: var(--font-tactical);
+  font-size: 13px;
+}
+
+/* Audio Waveform Visualizer in dock */
+.audio-visualizer-strip {
+  height: 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 3px;
+  padding: 0 4px;
+}
+
+.eq-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--accent-color);
+  box-shadow: 0 0 6px var(--accent-glow);
+  border-radius: 1px;
+  transition: height 0.08s ease;
+}
+
+/* ==========================================================================
+   RIGHT COLUMN: STARK PROTOCOLS & INTELLIGENCE HUD
+   ========================================================================== */
+.right-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+
+/* Quick Action Protocol Grid */
+.protocols-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.protocol-card {
+  background: var(--hud-bg-card);
+  border: 1px solid var(--hud-border);
+  clip-path: var(--corner-clip);
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.protocol-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; width: 3px; height: 100%;
+  background: var(--accent-color);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.protocol-card:hover {
+  background: var(--hud-bg-hover);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 15px var(--accent-glow);
+  transform: translateY(-2px);
+}
+
+.protocol-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.protocol-code {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--arc-gold);
+}
+
+.protocol-name {
+  font-family: var(--font-hud);
+  font-size: 11px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.protocol-desc {
+  font-size: 11px;
+  color: rgba(224, 247, 252, 0.6);
+  line-height: 1.2;
+}
+
+/* Live Terminal Log */
+.stark-terminal-box {
+  flex: 1;
+  background: rgba(3, 10, 22, 0.9);
+  border: 1px solid var(--hud-border);
+  clip-path: var(--corner-clip);
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+}
+
+.log-entry {
+  display: flex;
+  gap: 8px;
+  line-height: 1.3;
+}
+
+.log-time {
+  color: rgba(224, 247, 252, 0.4);
+  flex-shrink: 0;
+}
+
+.log-sender {
+  color: var(--accent-color);
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.log-sender.sender-jarvis {
+  color: var(--arc-cyan);
+}
+.log-sender.sender-friday {
+  color: var(--stark-green);
+}
+.log-sender.sender-user {
+  color: var(--arc-gold);
+}
+.log-sender.sender-system {
+  color: var(--stark-red);
+}
+
+.log-text {
+  color: #e0f7fc;
+  word-break: break-word;
+}
+
+/* ==========================================================================
+   MODAL DIALOGS & OVERLAYS (Holographic Stark Labs)
+   ========================================================================== */
+.stark-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 14, 0.85);
+  backdrop-filter: blur(16px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.stark-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.stark-modal-box {
+  width: 900px;
+  max-width: 94vw;
+  max-height: 88vh;
+  background: var(--hud-bg-glass);
+  border: 1.5px solid var(--hud-border-bright);
+  box-shadow: 0 0 50px rgba(0, 240, 255, 0.25), inset 0 0 30px rgba(0, 240, 255, 0.05);
+  clip-path: var(--corner-clip-lg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transform: scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.stark-modal-overlay.active .stark-modal-box {
+  transform: scale(1);
+}
+
+.stark-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--hud-border);
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.15) 0%, transparent 100%);
+}
+
+.stark-modal-title {
+  font-family: var(--font-hud);
+  font-size: 16px;
+  letter-spacing: 3px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: 1px solid var(--hud-border);
+  color: #e0f7fc;
+  width: 32px;
+  height: 32px;
+  clip-path: var(--corner-clip);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: var(--stark-red);
+  border-color: var(--stark-red);
+  color: #fff;
+  box-shadow: 0 0 12px var(--stark-red-glow);
+}
+
+.stark-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* 3D CAD Lab layout */
+.cad-lab-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 20px;
+  height: 520px;
+}
+
+.cad-canvas-container {
+  background: #030811;
+  border: 1px solid var(--hud-border);
+  position: relative;
+  clip-path: var(--corner-clip);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#cadCanvas3D {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+#cadCanvas3D:active {
+  cursor: grabbing;
+}
+
+.cad-controls-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--hud-bg-card);
+  border: 1px solid var(--hud-border);
+  padding: 16px;
+  clip-path: var(--corner-clip);
+}
+
+.cad-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cad-control-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(224, 247, 252, 0.7);
+  display: flex;
+  justify-content: space-between;
+}
+
+.stark-slider {
+  width: 100%;
+  accent-color: var(--accent-color);
+}
+
+/* Suits Vault Grid */
+.suits-vault-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.suit-card {
+  background: var(--hud-bg-card);
+  border: 1px solid var(--hud-border);
+  clip-path: var(--corner-clip);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.suit-card:hover {
+  border-color: var(--arc-gold);
+  box-shadow: 0 0 20px var(--arc-gold-glow);
+  transform: translateY(-3px);
+}
+
+.suit-card.is-active-suit {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 25px var(--accent-glow);
+  background: var(--hud-bg-hover);
+}
+
+.suit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.suit-name {
+  font-family: var(--font-hud);
+  font-size: 14px;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.suit-codename {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--arc-gold);
+}
+
+.suit-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: rgba(224, 247, 252, 0.75);
+}
+
+/* Satellite / Radar Screen */
+.satellite-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+  height: 520px;
+}
+
+.radar-map-container {
+  background: #020712;
+  border: 1px solid var(--hud-border);
+  position: relative;
+  clip-path: var(--corner-clip);
+  overflow: hidden;
+}
+
+#satelliteRadarCanvas {
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+.radar-targets-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--hud-bg-card);
+  border: 1px solid var(--hud-border);
+  padding: 16px;
+  clip-path: var(--corner-clip);
+  overflow-y: auto;
+}
+
+/* Emergency Lockdown Theme */
+body.mode-lockdown {
+  --accent-color: var(--stark-red) !important;
+  --accent-glow: var(--stark-red-glow) !important;
+  --accent-soft: rgba(255, 42, 95, 0.15) !important;
+  --hud-border: rgba(255, 42, 95, 0.35) !important;
+  --hud-border-bright: rgba(255, 42, 95, 0.8) !important;
+}
+
+body.mode-lockdown .stark-hud-viewport {
+  animation: lockdownWarning 1.5s infinite alternate;
+}
+
+/* ==========================================================================
+   KEYFRAME ANIMATIONS
+   ========================================================================== */
+@keyframes corePulse {
+  0%, 100% { transform: scale(1); opacity: 0.85; filter: drop-shadow(0 0 6px var(--accent-color)); }
+  50% { transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 14px var(--accent-color)); }
+}
+
+@keyframes radarRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes micPulse {
+  0% { transform: scale(1); box-shadow: 0 0 10px var(--stark-red); }
+  100% { transform: scale(1.08); box-shadow: 0 0 25px var(--stark-red-glow); }
+}
+
+@keyframes blinkFast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+@keyframes lockdownWarning {
+  0% { box-shadow: inset 0 0 50px rgba(255, 42, 95, 0.2); }
+  100% { box-shadow: inset 0 0 160px rgba(255, 42, 95, 0.5); }
+}
+
+/* ==========================================================================
+   RESPONSIVE ADJUSTMENTS
+   ========================================================================== */
+@media (max-width: 1200px) {
+  .stark-main-grid {
+    grid-template-columns: 280px 1fr 300px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 900px) {
+  .stark-main-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    overflow-y: auto;
+  }
+  html, body {
+    overflow: auto;
+  }
+}

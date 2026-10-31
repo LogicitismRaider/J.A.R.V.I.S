@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STARK INDUSTRIES // J.A.R.V.I.S. MARK-LXXXV OS</title>
+  <meta name="description" content="Tony Stark level J.A.R.V.I.S. artificial intelligence assistant with holographic HUD, voice synthesis, 3D CAD workshop, orbital satellite radar, and House Party Protocol.">
+
+  <!-- Google Fonts: Orbitron, Rajdhani, Share Tech Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- Stark HUD Stylesheet -->
+  <link rel="stylesheet" href="css/stark-hud.css">
+</head>
+<body>
+
+  <div class="stark-hud-viewport">
+
+    <!-- ======================================================================
+         TOP HEADER HUD
+         ====================================================================== -->
+    <header class="stark-header">
+      <div class="stark-brand">
+        <div class="stark-emblem" title="Stark Industries Arc Core">
+          <div class="stark-emblem-core"></div>
+        </div>
+        <div class="stark-title-group">
+          <h1>STARK INDUSTRIES</h1>
+          <div class="stark-subtitle">J.A.R.V.I.S. MARK-LXXXV TACTICAL OS // AVENGERS UPLINK</div>
+        </div>
+      </div>
+
+      <!-- Telemetry Status Badges -->
+      <div class="header-telemetry">
+        <div class="telemetry-chip">
+          <div class="telemetry-dot"></div>
+          <span class="chip-label">DEFCON:</span>
+          <span class="chip-val" id="defconVal">5 (SECURE)</span>
+        </div>
+        <div class="telemetry-chip">
+          <span class="chip-label">AI CORE:</span>
+          <span class="chip-val" id="aiPersonalityChip">JARVIS</span>
+        </div>
+        <div class="telemetry-chip">
+          <span class="chip-label">QUANTUM CPU:</span>
+          <span class="chip-val">4.8 THz</span>
+        </div>
+        <div class="telemetry-chip">
+          <span class="chip-label">CORE TEMP:</span>
+          <span class="chip-val" id="reactorTempVal">42.4 °C</span>
+        </div>
+      </div>
+
+      <!-- Header Action Controls -->
+      <div class="header-actions">
+        <button class="stark-btn btn-accent" id="muteToggleBtn" title="Toggle Sound FX">AUDIO: ON</button>
+        <button class="stark-btn btn-danger" id="lockdownToggleBtn" onclick="window.starkApp.toggleLockdown()" title="Toggle Emergency Lockdown (HotKey: L)">LOCKDOWN [L]</button>
+        <button class="stark-btn" onclick="window.starkApp.openModal('neuralModal')" title="Stark Neural Link & Settings">NEURAL LINK</button>
+      </div>
+    </header>
+
+    <!-- ======================================================================
+         MAIN HUD GRID (3-COLUMN COCKPIT)
+         ====================================================================== -->
+    <main class="stark-main-grid">
+
+      <!-- LEFT COLUMN: ARMOR TELEMETRY & DIAGNOSTICS -->
+      <section class="left-sidebar" aria-label="Armor Telemetry and Diagnostics">
+        
+        <!-- Active Armor Card -->
+        <div class="hud-panel" style="flex: 0 0 auto;">
+          <div class="hud-panel-header">
+            <span class="hud-panel-title"><i>◈</i> ARMOR TELEMETRY</span>
+            <span class="hud-panel-badge" id="activeArmorTag">MARK LXXXV [ENDGAME APEX]</span>
+          </div>
+          <div class="hud-panel-content" style="padding: 12px;">
+            <div class="armor-visualizer-container">
+              <canvas id="armorMiniCanvas" class="armor-canvas-hud"></canvas>
+              <div class="armor-model-tag">NANOTECH CHASSIS</div>
+              <div class="armor-integrity-tag" id="armorIntegrityTag">99.8% INTEGRITY</div>
+            </div>
+
+            <!-- Subsystem Gauges -->
+            <div class="gauge-row">
+              <div class="gauge-item">
+                <div class="gauge-label-row">
+                  <span>REPULSOR CAPACITANCE</span>
+                  <span>100%</span>
+                </div>
+                <div class="gauge-bar-track">
+                  <div class="gauge-bar-fill" id="repulsorGaugeBar" style="width: 100%;"></div>
+                </div>
+              </div>
+
+              <div class="gauge-item">
+                <div class="gauge-label-row">
+                  <span>ARC CORE FLUX</span>
+                  <span>98%</span>
+                </div>
+                <div class="gauge-bar-track">
+                  <div class="gauge-bar-fill fill-gold" style="width: 98%;"></div>
+                </div>
+              </div>
+
+              <div class="gauge-item">
+                <div class="gauge-label-row">
+                  <span>FLIGHT DAMPERS</span>
+                  <span>95%</span>
+                </div>
+                <div class="gauge-bar-track">
+                  <div class="gauge-bar-fill fill-green" style="width: 95%;"></div>
+                </div>
+              </div>
+
+              <div class="gauge-item">
+                <div class="gauge-label-row">
+                  <span>VIBRANIUM WEAVE</span>
+                  <span>99.4%</span>
+                </div>
+                <div class="gauge-bar-track">
+                  <div class="gauge-bar-fill" style="width: 99.4%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Diagnostics Suite -->
+        <div class="hud-panel" style="flex: 1 1 auto;">
+          <div class="hud-panel-header">
+            <span class="hud-panel-title"><i>◈</i> DIAGNOSTIC SUITE</span>
+            <button class="stark-btn" style="padding: 3px 8px; font-size: 9px;" onclick="window.starkApp.runFullDiagnostics()">SCAN [4]</button>
+          </div>
+          <div class="hud-panel-content" style="padding: 12px;">
+            <div class="diagnostics-list" id="diagnosticsList">
+              <div class="diag-item status-ok">
+                <span>REPULSOR EMITTERS</span>
+                <span>CHECK [OK]</span>
+              </div>
+              <div class="diag-item status-ok">
+                <span>NANITE COHESION</span>
+                <span>CHECK [OK]</span>
+              </div>
+              <div class="diag-item status-ok">
+                <span>VIBRANIUM MATRIX</span>
+                <span>CHECK [OK]</span>
+              </div>
+              <div class="diag-item status-ok">
+                <span>VERONICA ORBIT RELAY</span>
+                <span>CHECK [OK]</span>
+              </div>
+              <div class="diag-item status-ok">
+                <span>QUANTUM NEURAL UPLINK</span>
+                <span>CHECK [OK]</span>
+              </div>
+            </div>
+
+            <!-- Stark R&D Mission Tracker -->
+            <div style="margin-top: 8px;">
+              <div style="font-family: var(--font-hud); font-size: 10px; color: var(--arc-gold); letter-spacing: 1px; margin-bottom: 6px;">
+                ACTIVE R&D DIRECTIVES
+              </div>
+              <div id="starkTaskList" style="display: flex; flex-direction: column; gap: 4px;"></div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- CENTER COLUMN: HOLOGRAPHIC ARC REACTOR & VOICE COCKPIT -->
+      <section class="center-viewport" aria-label="Arc Reactor Core and Voice Console">
+        
+        <!-- Main Arc Reactor Stage -->
+        <div class="arc-reactor-stage">
+          <div class="reactor-radar-sweep"></div>
+          
+          <div class="reactor-canvas-wrapper" title="Click to discharge Repulsor Pulse Shockwave">
+            <canvas id="arcReactorCanvas"></canvas>
+          </div>
+
+          <!-- Reactor Output Telemetry -->
+          <div class="reactor-telemetry-hud">
+            <div class="reactor-stat">
+              <span class="stat-lbl">POWER OUTPUT</span>
+              <span class="stat-num" id="reactorOutputVal">3240.0 MW</span>
+            </div>
+            <div class="reactor-stat">
+              <span class="stat-lbl">CONTAINMENT</span>
+              <span class="stat-num" style="color: var(--stark-green)">100% NOMINAL</span>
+            </div>
+            <div class="reactor-stat">
+              <span class="stat-lbl">ELEMENT MATRIX</span>
+              <span class="stat-num" style="color: var(--arc-gold)">BADASSIUM-96</span>
+            </div>
+          </div>
+
+          <!-- J.A.R.V.I.S. Real-time Subtitles -->
+          <div class="jarvis-subtitles" id="jarvisSubtitles">
+            &ldquo;Ready when you are, Sir. All systems fully calibrated.&rdquo;
+          </div>
+        </div>
+
+        <!-- Voice & Command Dock -->
+        <div class="voice-command-dock">
+          <div class="voice-input-row">
+            <button class="mic-toggle-btn" id="micToggleBtn" title="Push-to-Talk / Voice Command (Hotkey: Spacebar)">
+              🎤
+            </button>
+            <div class="terminal-input-wrapper">
+              <span class="terminal-prompt-prefix">&gt;</span>
+              <input type="text" id="terminalInput" class="terminal-input" placeholder="Speak or type command (e.g. 'House party protocol', 'Run diagnostics', 'Weather in Malibu')...">
+            </div>
+            <button class="stark-btn btn-accent" id="terminalSendBtn">TRANSMIT</button>
+          </div>
+
+          <!-- Audio Equalizer Spectrum Strip -->
+          <div class="audio-visualizer-strip" id="eqVisualizerStrip"></div>
+        </div>
+
+      </section>
+
+      <!-- RIGHT COLUMN: STARK PROTOCOLS & INTELLIGENCE HUD -->
+      <section class="right-sidebar" aria-label="Tactical Protocols and Intelligence Feed">
+        
+        <!-- Protocol Grid -->
+        <div class="hud-panel" style="flex: 0 0 auto;">
+          <div class="hud-panel-header">
+            <span class="hud-panel-title"><i>◈</i> STARK PROTOCOLS</span>
+            <span class="hud-panel-badge">TACTICAL</span>
+          </div>
+          <div class="hud-panel-content" style="padding: 12px;">
+            <div class="protocols-grid">
+              
+              <!-- Protocol 1: House Party -->
+              <div class="protocol-card" onclick="window.starkApp.openModal('suitsModal')" title="Hotkey: 1">
+                <div class="protocol-header">
+                  <span class="protocol-name">HOUSE PARTY</span>
+                  <span class="protocol-code">[01]</span>
+                </div>
+                <div class="protocol-desc">Deploy all Mark series armor suits simultaneously.</div>
+              </div>
+
+              <!-- Protocol 2: Holographic CAD -->
+              <div class="protocol-card" onclick="window.starkApp.openModal('cadModal')" title="Hotkey: 2">
+                <div class="protocol-header">
+                  <span class="protocol-name">3D CAD LAB</span>
+                  <span class="protocol-code">[02]</span>
+                </div>
+                <div class="protocol-desc">Inspect holographic schematics & explode models.</div>
+              </div>
+
+              <!-- Protocol 3: E.D.I.T.H. Radar -->
+              <div class="protocol-card" onclick="window.starkApp.openModal('satelliteModal')" title="Hotkey: 3">
+                <div class="protocol-header">
+                  <span class="protocol-name">E.D.I.T.H. GRID</span>
+                  <span class="protocol-code">[03]</span>
+                </div>
+                <div class="protocol-desc">Orbital defense satellite radar & kinetic strike.</div>
+              </div>
+
+              <!-- Protocol 4: Veronica -->
+              <div class="protocol-card" onclick="window.starkArmorVault.deploySuit('MK-44')">
+                <div class="protocol-header">
+                  <span class="protocol-name">VERONICA DROP</span>
+                  <span class="protocol-code">[MK-44]</span>
+                </div>
+                <div class="protocol-desc">Deploy heavy orbital Hulkbuster containment frame.</div>
+              </div>
+
+              <!-- Protocol 5: Clean Slate -->
+              <div class="protocol-card" onclick="window.starkApp.triggerCleanSlate()" title="Hotkey: 5">
+                <div class="protocol-header">
+                  <span class="protocol-name" style="color: var(--stark-red)">CLEAN SLATE</span>
+                  <span class="protocol-code">[05]</span>
+                </div>
+                <div class="protocol-desc">Emergency core purge and armor capacitor release.</div>
+              </div>
+
+              <!-- Protocol 6: Diagnostics -->
+              <div class="protocol-card" onclick="window.starkApp.runFullDiagnostics()" title="Hotkey: 4">
+                <div class="protocol-header">
+                  <span class="protocol-name">DIAGNOSTICS</span>
+                  <span class="protocol-code">[06]</span>
+                </div>
+                <div class="protocol-desc">7-point subsystem health & telemetry calibration.</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Stark Terminal Log -->
+        <div class="hud-panel" style="flex: 1 1 auto;">
+          <div class="hud-panel-header">
+            <span class="hud-panel-title"><i>◈</i> LIVE INTELLIGENCE FEED</span>
+            <span class="hud-panel-badge" id="aiCoreTitle">JARVIS CORE v85.4</span>
+          </div>
+          <div class="hud-panel-content" style="padding: 10px;">
+            <div class="stark-terminal-box" id="starkTerminalBox"></div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- ======================================================================
+       MODAL 1: 3D HOLOGRAPHIC CAD WORKSHOP
+       ====================================================================== -->
+  <div class="stark-modal-overlay" id="cadModal">
+    <div class="stark-modal-box">
+      <div class="stark-modal-header">
+        <div class="stark-modal-title">
+          <i>◈</i> HOLOGRAPHIC CAD WORKSHOP // STARK LABS
+        </div>
+        <button class="modal-close-btn" title="Close (Hotkey: Esc)">✕</button>
+      </div>
+      <div class="stark-modal-body">
+        <div class="cad-lab-layout">
+          <div class="cad-canvas-container">
+            <canvas id="cadCanvas3D"></canvas>
+          </div>
+          <div class="cad-controls-panel">
+            <div class="cad-control-group">
+              <label class="cad-control-label" for="cadModelSelect">SELECT SCHEMATIC</label>
+              <select id="cadModelSelect" class="terminal-input" style="height:36px; padding:0 8px;">
+                <option value="ARC_REACTOR">Arc Reactor Mark II</option>
+                <option value="REPULSOR">Repulsor Gauntlet</option>
+                <option value="HELMET">Mark LXXXV Helmet</option>
+                <option value="TESSERACT">Tesseract Hypercube</option>
+              </select>
+            </div>
+
+            <div class="cad-control-group">
+              <div class="cad-control-label">
+                <span>EXPLODE ASSEMBLY</span>
+                <span id="explodeVal">0%</span>
+              </div>
+              <input type="range" id="cadExplodeSlider" class="stark-slider" min="0" max="1" step="0.01" value="0">
+            </div>
+
+            <div class="cad-control-group">
+              <label class="cad-control-label" for="cadRenderModeSelect">RENDER MATRIX</label>
+              <select id="cadRenderModeSelect" class="terminal-input" style="height:36px; padding:0 8px;">
+                <option value="wireframe">Holographic Wireframe</option>
+                <option value="points">Point Cloud Nodes</option>
+                <option value="solid">Full Synthetic Glow</option>
+              </select>
+            </div>
+
+            <div style="font-family: var(--font-mono); font-size: 11px; color: rgba(224,247,252,0.6); margin-top: auto; line-height: 1.4;">
+              [CONTROLS]: Drag cursor to rotate 360°. Scroll wheel to zoom in/out. Toggle explode view to inspect interior sub-components.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 2: HALL OF ARMOR / HOUSE PARTY PROTOCOL
+       ====================================================================== -->
+  <div class="stark-modal-overlay" id="suitsModal">
+    <div class="stark-modal-box" style="width: 1050px;">
+      <div class="stark-modal-header">
+        <div class="stark-modal-title">
+          <i>◈</i> HALL OF ARMOR // HOUSE PARTY PROTOCOL VAULT
+        </div>
+        <button class="modal-close-btn" title="Close (Hotkey: Esc)">✕</button>
+      </div>
+      <div class="stark-modal-body">
+        <div class="suits-vault-grid" id="suitsVaultGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 3: E.D.I.T.H. ORBITAL SATELLITE RADAR
+       ====================================================================== -->
+  <div class="stark-modal-overlay" id="satelliteModal">
+    <div class="stark-modal-box">
+      <div class="stark-modal-header">
+        <div class="stark-modal-title">
+          <i>◈</i> E.D.I.T.H. ORBITAL DEFENSE GRID // GLOBAL RECON
+        </div>
+        <button class="modal-close-btn" title="Close (Hotkey: Esc)">✕</button>
+      </div>
+      <div class="stark-modal-body">
+        <div class="satellite-grid-layout">
+          <div class="radar-map-container">
+            <canvas id="satelliteRadarCanvas"></canvas>
+          </div>
+          <div class="radar-targets-panel">
+            <div style="font-family: var(--font-hud); font-size: 12px; color: #fff; letter-spacing: 1.5px;">
+              TARGET ACQUISITION
+            </div>
+            <div id="lockedTargetReadout" style="font-family: var(--font-mono); font-size: 11px; display: flex; flex-direction: column; gap: 6px; background: rgba(3,10,22,0.8); padding: 10px; border-left: 2px solid var(--accent-color);">
+              <div><strong>TARGET:</strong> Avengers Compound, NY</div>
+              <div><strong>COORDINATES:</strong> 41.3° N, 73.9° W</div>
+              <div><strong>THREAT LEVEL:</strong> <span style="color: var(--stark-green)">LOW</span></div>
+            </div>
+
+            <button class="stark-btn btn-danger" id="fireOrbitalStrikeBtn" style="width: 100%; margin-top: 10px; padding: 12px;">
+              DEPLOY KINETIC STRIKE
+            </button>
+
+            <div style="font-family: var(--font-mono); font-size: 11px; color: rgba(224,247,252,0.6); margin-top: auto; line-height: 1.4;">
+              [RADAR SYSTEM]: Click anywhere on the radar crosshair to designate coordinates. Satellites automatically calculate orbital launch trajectory.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 4: STARK NEURAL LINK SETTINGS
+       ====================================================================== -->
+  <div class="stark-modal-overlay" id="neuralModal">
+    <div class="stark-modal-box" style="width: 600px;">
+      <div class="stark-modal-header">
+        <div class="stark-modal-title">
+          <i>◈</i> STARK NEURAL LINK CONFIGURATION
+        </div>
+        <button class="modal-close-btn" title="Close (Hotkey: Esc)">✕</button>
+      </div>
+      <div class="stark-modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+        
+        <div>
+          <label style="font-family: var(--font-mono); font-size: 12px; color: var(--arc-gold); display: block; margin-bottom: 6px;">
+            AI PERSONALITY MATRIX
+          </label>
+          <select id="personalitySelect" class="terminal-input" style="height: 38px; padding: 0 10px;">
+            <option value="JARVIS">J.A.R.V.I.S. (Just A Rather Very Intelligent System - British Male)</option>
+            <option value="FRIDAY">F.R.I.D.A.Y. (Tactical Female Assistant)</option>
+            <option value="EDITH">E.D.I.T.H. (Even Dead, I'm The Hero - Defense Command)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-family: var(--font-mono); font-size: 12px; color: var(--accent-color); display: block; margin-bottom: 6px;">
+            OPTIONAL GEMINI API KEY (LIVE QUANTUM INTELLIGENCE)
+          </label>
+          <input type="password" id="geminiKeyInput" class="terminal-input" placeholder="Paste your Google Gemini API key for live real-time LLM chat...">
+          <span style="font-family: var(--font-mono); font-size: 10px; color: rgba(224,247,252,0.5); display:block; margin-top:4px;">
+            *If left blank, J.A.R.V.I.S. runs entirely in fast offline neural intent mode with built-in Stark responses.
+          </span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; background: rgba(3,10,22,0.7); padding: 12px; clip-path: var(--corner-clip);">
+          <input type="checkbox" id="ambientHumCheck" style="accent-color: var(--accent-color); width: 18px; height: 18px;">
+          <label for="ambientHumCheck" style="font-family: var(--font-mono); font-size: 12px; cursor: pointer;">
+            Enable Ambient Arc Reactor Quantum Hum (55Hz Harmonic Resonance)
+          </label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+          <button class="stark-btn btn-accent" id="saveGeminiKeyBtn">SAVE CONFIGURATION</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 5: CLEAN SLATE PROTOCOL CONFIRMATION
+       ====================================================================== -->
+  <div class="stark-modal-overlay" id="cleanSlateModal">
+    <div class="stark-modal-box" style="width: 520px; border-color: var(--stark-red); box-shadow: 0 0 60px var(--stark-red-glow);">
+      <div class="stark-modal-header" style="background: linear-gradient(90deg, rgba(255,42,95,0.2) 0%, transparent 100%);">
+        <div class="stark-modal-title" style="color: var(--stark-red);">
+          ⚠ CLEAN SLATE PROTOCOL INITIATED
+        </div>
+      </div>
+      <div class="stark-modal-body" style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px;">
+        <p style="font-size: 13px; color: rgba(224,247,252,0.85); font-family: var(--font-mono);">
+          WARNING: Core thermal purge will flush active system memory, reset armor gantry telemetry, and trigger capacitor overload release.
+        </p>
+
+        <div style="font-family: var(--font-hud); font-size: 48px; color: var(--stark-red); text-shadow: 0 0 25px var(--stark-red-glow);" id="cleanSlateCountdown">
+          5
+        </div>
+
+        <div style="display: flex; gap: 16px; margin-top: 10px;">
+          <button class="stark-btn btn-danger" onclick="window.starkApp.abortCleanSlate()" style="padding: 12px 24px; font-size: 13px;">
+            ABORT PROTOCOL
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script Modules -->
+  <script src="js/audio-sfx.js"></script>
+  <script src="js/arc-reactor.js"></script>
+  <script src="js/cad-viewer.js"></script>
+  <script src="js/speech-engine.js"></script>
+  <script src="js/armor-vault.js"></script>
+  <script src="js/satellite-grid.js"></script>
+  <script src="js/ai-brain.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
