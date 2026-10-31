@@ -449,6 +449,42 @@
           </select>
         </div>
 
+        <!-- System Voice Selector -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+            <label style="font-family: var(--font-mono); font-size: 12px; color: var(--arc-cyan);">
+              VOICE SYNTHESIZER (SELECT NATURAL / NEURAL VOICE)
+            </label>
+            <button class="stark-btn btn-accent" id="testVoiceBtn" type="button" style="padding: 3px 8px; font-size: 10px;">
+              🔊 TEST VOICE
+            </button>
+          </div>
+          <select id="voicePickerSelect" class="terminal-input" style="height: 38px; padding: 0 10px;">
+            <option value="">Auto-Detecting Natural Voices...</option>
+          </select>
+          <span style="font-family: var(--font-mono); font-size: 10px; color: rgba(224,247,252,0.5); display:block; margin-top:4px;">
+            *Voices tagged with ★ [NATURAL] use Edge/Chrome neural models for ultra-realistic human cadence.
+          </span>
+        </div>
+
+        <!-- Voice Rate & Pitch Tuning -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; background: rgba(3,10,22,0.6); padding: 10px; clip-path: var(--corner-clip);">
+          <div>
+            <div style="display:flex; justify-content:space-between; font-family: var(--font-mono); font-size: 11px; color: rgba(224,247,252,0.7); margin-bottom: 4px;">
+              <span>SPEED (CADENCE)</span>
+              <span id="voiceRateVal">1.0x</span>
+            </div>
+            <input type="range" id="voiceRateSlider" class="stark-slider" min="0.7" max="1.3" step="0.05" value="1.0">
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-family: var(--font-mono); font-size: 11px; color: rgba(224,247,252,0.7); margin-bottom: 4px;">
+              <span>TONE (WARM PITCH)</span>
+              <span id="voicePitchVal">0.95</span>
+            </div>
+            <input type="range" id="voicePitchSlider" class="stark-slider" min="0.7" max="1.3" step="0.05" value="0.95">
+          </div>
+        </div>
+
         <div>
           <label style="font-family: var(--font-mono); font-size: 12px; color: var(--accent-color); display: block; margin-bottom: 6px;">
             OPTIONAL GEMINI API KEY (LIVE QUANTUM INTELLIGENCE)

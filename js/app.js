@@ -198,10 +198,61 @@ class StarkApp {
     // Personality Switcher Radio / Select
     const personalitySelect = document.getElementById('personalitySelect');
     if (personalitySelect) {
+      if (window.starkSpeech) personalitySelect.value = window.starkSpeech.currentPersonality;
       personalitySelect.addEventListener('change', (e) => {
         const val = e.target.value;
         if (window.starkSpeech) window.starkSpeech.setPersonality(val);
         this.updatePersonalityUI(val);
+      });
+    }
+
+    // Voice Synthesizer Picker
+    const voicePicker = document.getElementById('voicePickerSelect');
+    if (voicePicker) {
+      voicePicker.addEventListener('change', (e) => {
+        if (window.starkSpeech) {
+          window.starkSpeech.setCustomVoice(e.target.value);
+        }
+      });
+    }
+
+    // Test Voice Audition Button
+    const testVoiceBtn = document.getElementById('testVoiceBtn');
+    if (testVoiceBtn) {
+      testVoiceBtn.addEventListener('click', () => {
+        if (window.starkSpeech) {
+          window.starkSpeech.testVoice();
+        }
+      });
+    }
+
+    // Voice Speed Slider
+    const rateSlider = document.getElementById('voiceRateSlider');
+    const rateVal = document.getElementById('voiceRateVal');
+    if (rateSlider && rateVal) {
+      if (window.starkSpeech) {
+        rateSlider.value = window.starkSpeech.voiceRate;
+        rateVal.textContent = window.starkSpeech.voiceRate + 'x';
+      }
+      rateSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        rateVal.textContent = val + 'x';
+        if (window.starkSpeech) window.starkSpeech.setRate(val);
+      });
+    }
+
+    // Voice Pitch Slider
+    const pitchSlider = document.getElementById('voicePitchSlider');
+    const pitchVal = document.getElementById('voicePitchVal');
+    if (pitchSlider && pitchVal) {
+      if (window.starkSpeech) {
+        pitchSlider.value = window.starkSpeech.voicePitch;
+        pitchVal.textContent = window.starkSpeech.voicePitch;
+      }
+      pitchSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        pitchVal.textContent = val;
+        if (window.starkSpeech) window.starkSpeech.setPitch(val);
       });
     }
 
@@ -300,11 +351,13 @@ class StarkApp {
     modal.classList.add('active');
     if (window.starkAudio) window.starkAudio.playBeep(1800, 'sine', 0.05);
 
-    // Refresh canvases if inside modal
+    // Refresh canvases or voice picker if inside modal
     if (modalId === 'cadModal' && this.cadViewer) {
       setTimeout(() => this.cadViewer.resize(), 100);
     } else if (modalId === 'satelliteModal' && this.satelliteGrid) {
       setTimeout(() => this.satelliteGrid.resize(), 100);
+    } else if (modalId === 'neuralModal' && window.starkSpeech) {
+      window.starkSpeech.populateVoicePicker();
     }
   }
 
