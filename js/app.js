@@ -50,6 +50,7 @@ class StarkApp {
       window.starkArmorVault.renderVaultCards('suitsVaultGrid');
     }
     this.renderTasks();
+    this.renderReminders();
     this.initLeftArmorMiniWireframe();
     this.setupEventListeners();
     this.startTelemetryLoop();
@@ -128,6 +129,7 @@ class StarkApp {
         if (window.starkSpeech) window.starkSpeech.toggleListening();
       } else if (e.key === 'Escape') {
         this.closeAllModals();
+        if (window.starkBrain) window.starkBrain.dismissActiveAlarm();
       } else if (e.key === 'l' || e.key === 'L') {
         this.toggleLockdown();
       } else if (e.key === 'm' || e.key === 'M') {
@@ -585,6 +587,85 @@ class StarkApp {
       if (window.starkAudio) window.starkAudio.playBeep(1400);
     }
   }
+
+  showAlarmBanner(text) {
+    const banner = document.getElementById('reminderAlarmBanner');
+    const bannerText = document.getElementById('alarmBannerText');
+    if (banner && bannerText) {
+      bannerText.textContent = text;
+      banner.classList.add('active');
+    }
+  }
+
+  hideAlarmBanner() {
+    const banner = document.getElementById('reminderAlarmBanner');
+    if (banner) {
+      banner.classList.remove('active');
+    }
+  }
+
+  renderReminders() {
+    const list = document.getElementById('starkReminderList');
+    if (!list || !window.starkBrain) return;
+
+    if (window.starkBrain.reminders.length === 0) {
+      list.innerHTML = `
+        <div style="font-size:10px; color:rgba(224,247,252,0.4); font-family:var(--font-mono); padding:4px 0;">
+          No active chrono timers. Speak or type: "Remind me in 10s to..."
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = window.starkBrain.reminders.map(r => {
+      const remainingSecs = Math.max(0, Math.round((r.dueTimestamp - Date.now()) / 1000));
+      return `
+        <div class="reminder-item ${remainingSecs <= 0 ? 'is-due' : ''}" id="rem-${r.id}">
+          <div style="display:flex; flex-direction:column; gap:2px; overflow:hidden;">
+            <span style="color:#fff; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.text}</span>
+            <span class="reminder-time-badge" id="rem-badge-${r.id}">${this.formatDuration(remainingSecs)} remaining</span>
+          </div>
+          <button class="stark-btn btn-danger" style="padding:2px 6px; font-size:9px" onclick="window.starkApp.cancelReminder(${r.id})">
+            CANCEL
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  updateReminderCountdowns() {
+    if (!window.starkBrain) return;
+    window.starkBrain.reminders.forEach(r => {
+      const badge = document.getElementById(`rem-badge-${r.id}`);
+      if (badge) {
+        const remainingSecs = Math.max(0, Math.round((r.dueTimestamp - Date.now()) / 1000));
+        badge.textContent = `${this.formatDuration(remainingSecs)} remaining`;
+      }
+    });
+  }
+
+  formatDuration(secs) {
+    if (secs >= 3600) {
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      return `${h}h ${m}m`;
+    }
+    if (secs >= 60) {
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      return `${m}m ${s}s`;
+    }
+    return `${secs}s`;
+  }
+
+  cancelReminder(id) {
+    if (!window.starkBrain) return;
+    window.starkBrain.reminders = window.starkBrain.reminders.filter(r => r.id !== id);
+    window.starkBrain.saveReminders();
+    this.renderReminders();
+    if (window.starkAudio) window.starkAudio.playBeep(1200);
+    this.logTerminal("SYSTEM", "CHRONO DIRECTIVE CANCELLED.");
+  }
 }
 
 // Global instance initialized on DOMContentLoaded
@@ -592,3 +673,4 @@ window.starkApp = new StarkApp();
 window.addEventListener('DOMContentLoaded', () => {
   window.starkApp.init();
 });
+
