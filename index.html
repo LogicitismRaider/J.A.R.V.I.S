@@ -43,6 +43,11 @@
           <span class="chip-label">AI CORE:</span>
           <span class="chip-val" id="aiPersonalityChip">JARVIS</span>
         </div>
+        <div class="telemetry-chip" id="wakeWordStatusChip" style="cursor: pointer;" onclick="window.starkSpeech.toggleWakeWordMode()" title="Toggle Background 'Hey Jarvis' Wake Word Detection">
+          <div class="telemetry-dot" id="wakeWordDot" style="background: var(--stark-green); box-shadow: 0 0 8px var(--stark-green);"></div>
+          <span class="chip-label">WAKE WORD:</span>
+          <span class="chip-val" id="wakeWordStatusVal" style="color: var(--stark-green)">HEY JARVIS [ON]</span>
+        </div>
         <div class="telemetry-chip">
           <span class="chip-label">QUANTUM CPU:</span>
           <span class="chip-val">4.8 THz</span>

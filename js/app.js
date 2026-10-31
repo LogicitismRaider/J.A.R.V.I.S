@@ -51,6 +51,7 @@ class StarkApp {
     }
     this.renderTasks();
     this.renderReminders();
+    this.updateWakeWordUI(window.starkSpeech ? window.starkSpeech.isWakeWordActive : true);
     this.initLeftArmorMiniWireframe();
     this.setupEventListeners();
     this.startTelemetryLoop();
@@ -79,9 +80,12 @@ class StarkApp {
   }
 
   setupEventListeners() {
-    // Unlock Web Audio on first click anywhere
+    // Unlock Web Audio & ambient wake word on first click anywhere
     document.addEventListener('click', () => {
       if (window.starkAudio) window.starkAudio.init();
+      if (window.starkSpeech && window.starkSpeech.isWakeWordActive) {
+        window.starkSpeech.startListeningSafely();
+      }
     }, { once: true });
 
     // Voice Mic button
@@ -327,16 +331,40 @@ class StarkApp {
     box.scrollTop = box.scrollHeight;
   }
 
-  updateMicUI(isListening) {
+  updateMicUI(isListening, isWakeWordActive = false) {
     const micBtn = document.getElementById('micToggleBtn');
     if (!micBtn) return;
 
     if (isListening) {
-      micBtn.classList.add('is-listening');
-      if (this.reactor) this.reactor.setState('LISTENING');
+      if (isWakeWordActive) {
+        micBtn.classList.remove('is-listening');
+        micBtn.classList.add('is-wake-monitoring');
+        micBtn.title = "Ambient Mic Active: Say 'Hey Jarvis' or click to Speak Direct Command";
+      } else {
+        micBtn.classList.remove('is-wake-monitoring');
+        micBtn.classList.add('is-listening');
+        micBtn.title = "Recording Active: Speak Now";
+        if (this.reactor) this.reactor.setState('LISTENING');
+      }
     } else {
       micBtn.classList.remove('is-listening');
+      micBtn.classList.remove('is-wake-monitoring');
+      micBtn.title = "Microphone Idle: Click to activate";
       if (this.reactor && !this.isLockdown) this.reactor.setState('IDLE');
+    }
+  }
+
+  updateWakeWordUI(active) {
+    const chipVal = document.getElementById('wakeWordStatusVal');
+    const chipDot = document.getElementById('wakeWordDot');
+    const activeName = (window.starkSpeech ? window.starkSpeech.currentPersonality : 'JARVIS');
+    if (chipVal) {
+      chipVal.textContent = active ? `HEY ${activeName} [ON]` : 'OFF [STANDBY]';
+      chipVal.style.color = active ? 'var(--stark-green)' : 'rgba(224,247,252,0.4)';
+    }
+    if (chipDot) {
+      chipDot.style.background = active ? 'var(--stark-green)' : 'rgba(224,247,252,0.3)';
+      chipDot.style.boxShadow = active ? '0 0 8px var(--stark-green)' : 'none';
     }
   }
 
@@ -406,6 +434,8 @@ class StarkApp {
 
     const titleElem = document.getElementById('aiCoreTitle');
     if (titleElem) titleElem.textContent = `${persona} CORE v85.4`;
+
+    this.updateWakeWordUI(window.starkSpeech ? window.starkSpeech.isWakeWordActive : true);
   }
 
   onSuitDeployed(suit) {

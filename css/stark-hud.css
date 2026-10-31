@@ -657,6 +657,24 @@ html, body {
   animation: micPulse 1s infinite alternate;
 }
 
+.mic-toggle-btn.is-wake-monitoring {
+  border-color: var(--stark-green);
+  color: var(--stark-green);
+  box-shadow: 0 0 16px var(--stark-green-glow);
+  animation: wakeWordPulse 2.5s infinite ease-in-out;
+}
+
+@keyframes wakeWordPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(0, 255, 136, 0.8), 0 0 30px rgba(0, 240, 255, 0.4);
+    transform: scale(1.06);
+  }
+}
+
 .terminal-input-wrapper {
   flex: 1;
   position: relative;

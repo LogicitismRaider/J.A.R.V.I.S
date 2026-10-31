@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * STARK INDUSTRIES // ADVANCED SPEECH SYNTHESIS & RECOGNITION ENGINE
- * Natural Neural Voice Selection, Formant Tuning & Robust Speech Recognition
+ * Natural Neural Voice Selection, Always-On "Hey Jarvis" Background Wake-Word Detection
  * ============================================================================
  */
 
@@ -10,7 +10,9 @@ class StarkSpeechEngine {
     this.synth = window.speechSynthesis;
     this.recognition = null;
     this.isListening = false;
-    this.currentPersonality = localStorage.getItem('stark_personality') || 'JARVIS'; // JARVIS | FRIDAY | EDITH | CYBER_STARK | CUSTOM
+    this.isSpeaking = false;
+    this.isWakeWordActive = localStorage.getItem('stark_wake_word_active') !== 'false'; // Default TRUE
+    this.currentPersonality = localStorage.getItem('stark_personality') || 'JARVIS'; // JARVIS | FRIDAY | EDITH
 
     // Custom Voice Preferences
     this.selectedVoiceURI = localStorage.getItem('stark_voice_uri') || '';
@@ -23,6 +25,11 @@ class StarkSpeechEngine {
     this.fridayVoice = null;
     this.edithVoice = null;
     this.customVoice = null;
+
+    // Wake Word State
+    this.wakeWordDebounce = 0;
+    this.restartTimeout = null;
+    this.hasAwaitingDirective = false;
 
     // Subtitle DOM reference
     this.subtitleElem = null;
@@ -45,7 +52,6 @@ class StarkSpeechEngine {
 
       console.log(`[STARK AUDIO] Loaded ${this.voices.length} system voices.`);
 
-      // Score and sort voices by naturalness & quality
       const scoredVoices = this.voices.map(v => ({
         voice: v,
         score: this.scoreVoiceQuality(v)
@@ -88,7 +94,6 @@ class StarkSpeechEngine {
         this.customVoice = this.voices.find(v => v.voiceURI === this.selectedVoiceURI) || null;
       }
 
-      // Populate voice picker in settings UI
       this.populateVoicePicker();
     };
 
@@ -103,18 +108,15 @@ class StarkSpeechEngine {
     const name = (v.name || '').toLowerCase();
     const lang = (v.lang || '').toLowerCase();
 
-    // Natural / Neural online voices (Edge & Chrome natural voices sound 10x better than local SAPI5)
     if (name.includes('natural')) score += 60;
     if (name.includes('online')) score += 40;
     if (name.includes('neural')) score += 50;
     if (name.includes('google')) score += 35;
     if (name.includes('premium') || name.includes('enhanced')) score += 30;
 
-    // English language bonus
     if (lang.startsWith('en')) score += 20;
-    if (lang === 'en-gb' || lang.startsWith('en_gb')) score += 15; // British accent preference for JARVIS
+    if (lang === 'en-gb' || lang.startsWith('en_gb')) score += 15;
 
-    // Penalize legacy robotic Windows Desktop SAPI5 voices
     if (name.includes('desktop')) score -= 45;
     if (name.includes('david')) score -= 30;
     if (name.includes('microsoft mark')) score -= 30;
@@ -127,8 +129,6 @@ class StarkSpeechEngine {
     if (!select || !this.voices) return;
 
     const currentVal = this.selectedVoiceURI || (this.jarvisVoice ? this.jarvisVoice.voiceURI : '');
-    
-    // Sort for display: English first, then by natural score
     const sorted = [...this.voices].sort((a, b) => this.scoreVoiceQuality(b) - this.scoreVoiceQuality(a));
 
     select.innerHTML = sorted.map(v => {
@@ -183,12 +183,10 @@ class StarkSpeechEngine {
       return;
     }
 
-    // Cancel active speech if priority
     if (priority || this.synth.speaking) {
       this.synth.cancel();
     }
 
-    // Clean text of markdown asterisks/symbols for natural speech
     const cleanText = text
       .replace(/[\*\#\_\[\]\(\)\>]/g, ' ')
       .replace(/\s+/g, ' ')
@@ -196,9 +194,7 @@ class StarkSpeechEngine {
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
 
-    // Pick active voice
     let activeVoice = this.customVoice;
-
     if (!activeVoice) {
       if (this.currentPersonality === 'FRIDAY') {
         activeVoice = this.fridayVoice || this.jarvisVoice;
@@ -213,13 +209,12 @@ class StarkSpeechEngine {
       utterance.voice = activeVoice;
     }
 
-    // Rate and pitch tuning for authentic, non-robotic warmth
     let rate = this.voiceRate;
     let pitch = this.voicePitch;
 
     if (this.currentPersonality === 'JARVIS') {
-      rate = this.voiceRate * 0.98; // Slightly deliberate, calm British cadence
-      pitch = this.voicePitch * 0.94; // Deeper, confident, warm tone
+      rate = this.voiceRate * 0.98;
+      pitch = this.voicePitch * 0.94;
     } else if (this.currentPersonality === 'FRIDAY') {
       rate = this.voiceRate * 1.04;
       pitch = this.voicePitch * 1.08;
@@ -230,15 +225,18 @@ class StarkSpeechEngine {
     utterance.volume = 1.0;
 
     utterance.onstart = () => {
+      this.isSpeaking = true;
       this.renderSubtitle(cleanText);
       if (this.onSpeechStart) this.onSpeechStart();
     };
 
     utterance.onend = () => {
+      this.isSpeaking = false;
       if (this.onSpeechEnd) this.onSpeechEnd();
     };
 
     utterance.onerror = (e) => {
+      this.isSpeaking = false;
       console.warn("Speech synthesis error", e);
       if (this.onSpeechEnd) this.onSpeechEnd();
     };
@@ -256,11 +254,12 @@ class StarkSpeechEngine {
     if (this.synth) {
       this.synth.cancel();
     }
+    this.isSpeaking = false;
     if (this.onSpeechEnd) this.onSpeechEnd();
   }
 
   // ==========================================================================
-  // SPEECH RECOGNITION (VOICE INPUT) WITH PERMISSION RECOVERY
+  // ALWAYS-ON BACKGROUND "HEY JARVIS" WAKE-WORD DETECTION ENGINE
   // ==========================================================================
   initRecognition() {
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -271,105 +270,206 @@ class StarkSpeechEngine {
 
     try {
       this.recognition = new SpeechRec();
-      this.recognition.continuous = false;
-      this.recognition.interimResults = true;
+      this.recognition.continuous = true; // Stay active across pauses
+      this.recognition.interimResults = true; // Rapid wake-word detection
       this.recognition.lang = 'en-US';
 
       this.recognition.onstart = () => {
         this.isListening = true;
-        if (window.starkAudio) window.starkAudio.playBeep(1800, 'sine', 0.05);
         if (window.starkApp) {
-          window.starkApp.updateMicUI(true);
-          window.starkApp.logTerminal("VOICE MIC", "LISTENING ACTIVE: Speak your command now...");
+          window.starkApp.updateMicUI(true, this.isWakeWordActive);
         }
       };
 
       this.recognition.onresult = (event) => {
+        // Do not process speech while Jarvis himself is speaking (prevents self-trigger loop)
+        if (this.isSpeaking) return;
+
+        let interimTranscript = '';
         let finalTranscript = '';
+
         for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const transcriptChunk = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
+            finalTranscript += transcriptChunk;
           } else {
-            const interim = event.results[i][0].transcript;
-            if (window.starkApp) {
-              window.starkApp.setLiveInput(interim);
+            interimTranscript += transcriptChunk;
+          }
+        }
+
+        const candidate = (finalTranscript || interimTranscript).trim().toLowerCase();
+
+        // 1. Check for Wake Word: "hey jarvis", "jarvis", "hey friday", "friday", "edith"
+        const wakePattern = /\b(?:hey\s+)?(jarvis|friday|edith)\b/i;
+        const wakeMatch = candidate.match(wakePattern);
+
+        if (wakeMatch) {
+          const now = Date.now();
+          // Debounce wake activation
+          if (now - this.wakeWordDebounce > 2500) {
+            this.wakeWordDebounce = now;
+
+            // Trigger wake chime & reactor pulse
+            if (window.starkAudio) window.starkAudio.playActivationChime();
+            if (window.starkApp && window.starkApp.reactor) {
+              window.starkApp.reactor.setState('LISTENING');
+            }
+
+            // Extract trailing command if user said: "Hey Jarvis [do something]"
+            const trailingCommand = candidate.replace(/^.*?\b(?:hey\s+)?(?:jarvis|friday|edith)\b[\,\:\s]*/i, '').trim();
+
+            if (trailingCommand.length > 2) {
+              // Direct command attached to wake word
+              if (window.starkApp) {
+                window.starkApp.logTerminal("WAKE TRIGGER", `HEARD: "${candidate}" -> EXECUTING DIRECTIVE`);
+              }
+              if (this.onCommandHeard) {
+                this.onCommandHeard(trailingCommand);
+              }
+              return;
+            } else {
+              // User just said "Hey Jarvis" -> Prompt for directive
+              this.hasAwaitingDirective = true;
+              const greetings = {
+                JARVIS: "At your service, Sir. What is your command?",
+                FRIDAY: "Right here, Boss! What do you need?",
+                EDITH: "Standing by, Sir. Defense grid ready."
+              };
+              const ack = greetings[this.currentPersonality] || "Yes, Sir?";
+              
+              if (window.starkApp) {
+                window.starkApp.logTerminal("WAKE TRIGGER", `WAKE WORD ACKNOWLEDGED: "${wakeMatch[0].toUpperCase()}" -> AWAITING DIRECTIVE`);
+              }
+              this.speak(ack, true);
+              return;
             }
           }
         }
 
-        if (finalTranscript.trim()) {
-          const cleaned = finalTranscript.trim();
+        // 2. If already awaiting directive from previous "Hey Jarvis" prompt
+        if (this.hasAwaitingDirective && finalTranscript.trim().length > 1) {
+          this.hasAwaitingDirective = false;
           if (this.onCommandHeard) {
-            this.onCommandHeard(cleaned);
+            this.onCommandHeard(finalTranscript.trim());
+          }
+          return;
+        }
+
+        // 3. If standard push-to-talk was used without wake word
+        if (finalTranscript.trim() && !this.isWakeWordActive) {
+          if (this.onCommandHeard) {
+            this.onCommandHeard(finalTranscript.trim());
           }
         }
       };
 
       this.recognition.onerror = (event) => {
-        console.warn("Speech recognition error:", event.error);
-        this.isListening = false;
-        if (window.starkApp) window.starkApp.updateMicUI(false);
-
-        let helpMsg = `Speech recognition error: ${event.error}`;
-        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-          helpMsg = "MICROPHONE PERMISSION BLOCKED: Please click the lock or camera icon in your browser address bar and grant Microphone permission.";
-          if (window.starkApp) window.starkApp.showAlarmBanner("Microphone blocked. Click the lock icon in address bar to allow.");
-        } else if (event.error === 'no-speech') {
-          helpMsg = "No speech detected before timeout. Click the mic button again and speak clearly.";
-        } else if (event.error === 'network') {
-          helpMsg = "Speech recognition network timeout. Ensure internet connectivity for Chromium speech engine, or type directly in the prompt.";
+        // Silent recovery for ambient background listening
+        if (event.error === 'no-speech') {
+          // Normal background silence, onend will auto-restart
+          return;
         }
 
-        if (window.starkApp) {
-          window.starkApp.logTerminal("VOICE ALERT", helpMsg);
+        console.warn("Speech recognition error:", event.error);
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          this.isWakeWordActive = false;
+          this.isListening = false;
+          if (window.starkApp) {
+            window.starkApp.updateMicUI(false, false);
+            window.starkApp.logTerminal("VOICE ALERT", "MICROPHONE PERMISSION BLOCKED: Please click the lock icon in your address bar and allow microphone access.");
+            window.starkApp.showAlarmBanner("Microphone blocked. Click the lock icon in browser address bar to allow.");
+          }
         }
       };
 
       this.recognition.onend = () => {
         this.isListening = false;
-        if (window.starkApp) window.starkApp.updateMicUI(false);
+
+        // Auto-restart in background if wake-word detection is enabled!
+        if (this.isWakeWordActive) {
+          clearTimeout(this.restartTimeout);
+          this.restartTimeout = setTimeout(() => {
+            this.startListeningSafely();
+          }, 300);
+        } else {
+          if (window.starkApp) window.starkApp.updateMicUI(false, false);
+        }
       };
     } catch (err) {
       console.warn("Could not instantiate SpeechRecognition", err);
     }
   }
 
-  async toggleListening() {
-    // 1. Check if browser supports SpeechRecognition
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRec || !this.recognition) {
-      const msg = "Speech recognition is supported natively in Google Chrome and Microsoft Edge. You can also type any command or question directly into the prompt below!";
-      if (window.starkApp) {
-        window.starkApp.logTerminal("VOICE ALERT", msg);
-        window.starkApp.showAlarmBanner(msg);
-      } else {
-        alert(msg);
-      }
-      return;
-    }
+  async startListeningSafely() {
+    if (!this.recognition || this.isListening) return;
 
-    // 2. If already listening, stop
-    if (this.isListening) {
-      try {
-        this.recognition.stop();
-      } catch (e) {
-        // Ignore
+    try {
+      this.recognition.start();
+    } catch (e) {
+      // If busy, retry briefly
+      clearTimeout(this.restartTimeout);
+      this.restartTimeout = setTimeout(() => {
+        try { this.recognition.start(); } catch (err) { /* ignore */ }
+      }, 500);
+    }
+  }
+
+  async toggleWakeWordMode() {
+    this.isWakeWordActive = !this.isWakeWordActive;
+    localStorage.setItem('stark_wake_word_active', this.isWakeWordActive.toString());
+
+    if (window.starkAudio) window.starkAudio.playBeep(this.isWakeWordActive ? 1800 : 1000);
+
+    if (this.isWakeWordActive) {
+      // Request mic permission if not already granted
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(t => t.stop());
+        } catch (e) {
+          console.warn("Mic access blocked", e);
+        }
+      }
+
+      this.startListeningSafely();
+      if (window.starkApp) {
+        window.starkApp.logTerminal("SYSTEM", "ALWAYS-ON AMBIENT MIC ENGAGED: Listening for 'Hey Jarvis' in background...");
+        window.starkApp.updateWakeWordUI(true);
+      }
+    } else {
+      if (this.recognition) {
+        try { this.recognition.stop(); } catch (e) { /* ignore */ }
       }
       this.isListening = false;
-      if (window.starkApp) window.starkApp.updateMicUI(false);
+      if (window.starkApp) {
+        window.starkApp.logTerminal("SYSTEM", "ALWAYS-ON WAKE WORD DISABLED: Switched to Push-To-Talk mode.");
+        window.starkApp.updateWakeWordUI(false);
+      }
+    }
+  }
+
+  async toggleListening() {
+    // When user explicitly clicks mic button or presses Spacebar
+    if (!this.recognition) {
+      const msg = "Speech recognition is supported natively in Google Chrome and Microsoft Edge.";
+      if (window.starkApp) window.starkApp.showAlarmBanner(msg);
       return;
     }
 
-    // 3. Request Microphone permission explicitly via getUserMedia first if needed
+    if (this.isListening && !this.isWakeWordActive) {
+      try { this.recognition.stop(); } catch (e) { /* ignore */ }
+      this.isListening = false;
+      if (window.starkApp) window.starkApp.updateMicUI(false, false);
+      return;
+    }
+
+    // Explicit push-to-talk check
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
-        // Quick permission check / prompt
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Close test tracks immediately
-        stream.getTracks().forEach(track => track.stop());
-      } catch (micErr) {
-        console.warn("Microphone access denied via getUserMedia:", micErr);
-        const errMsg = "MICROPHONE ACCESS DENIED: Please allow microphone access in your browser to speak commands.";
+        stream.getTracks().forEach(t => t.stop());
+      } catch (e) {
+        const errMsg = "MICROPHONE ACCESS DENIED: Please allow microphone access in your browser to speak.";
         if (window.starkApp) {
           window.starkApp.logTerminal("VOICE ALERT", errMsg);
           window.starkApp.showAlarmBanner(errMsg);
@@ -378,18 +478,8 @@ class StarkSpeechEngine {
       }
     }
 
-    // 4. Start recognition safely
-    try {
-      this.recognition.start();
-    } catch (startErr) {
-      console.warn("Recognition start failed, restarting instance:", startErr);
-      try {
-        this.recognition.stop();
-        setTimeout(() => this.recognition.start(), 200);
-      } catch (e) {
-        this.isListening = false;
-      }
-    }
+    this.startListeningSafely();
+    if (window.starkApp) window.starkApp.logTerminal("VOICE MIC", "PUSH-TO-TALK ACTIVE: Speak your command now...");
   }
 }
 
